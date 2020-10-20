@@ -163,6 +163,7 @@ func (c *Client) DeleteCluster(id, account_id string) error {
 	return nil
 }
 
+// read cluster
 func (c *Client) GetCluster(id, account_id string) (*Cluster, error) {
 	rel, err := url.Parse(fmt.Sprintf("clusters/%s", id))
 	if err != nil {

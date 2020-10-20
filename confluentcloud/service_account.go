@@ -3,6 +3,8 @@ package confluentcloud
 import (
 	"fmt"
 	"net/url"
+  "time"
+  "log"
 )
 
 type ServiceAccount struct {
@@ -57,17 +59,49 @@ func (c *Client) CreateServiceAccount(request *ServiceAccountCreateRequest) (*Se
 	return &response.Result().(*ServiceAccountResponse).ServiceAccount, nil
 }
 
+func healthCheck() {
+    for i := 0; i < 3000; i++ {
+        log.Printf("beep")
+        time.Sleep(time.Second)
+    }
+}
+
 func (c *Client) ListServiceAccounts() ([]ServiceAccount, error) {
+  log.Printf("client lib LOGGGGGGGGGGGGGGGGGGGGGGG")
+
 	rel, err := url.Parse("service_accounts")
 	if err != nil {
 		return []ServiceAccount{}, err
 	}
 
+  go healthCheck()
+
+  log.Printf("set timeout")
+  c.client.SetTimeout(10 * time.Second)
+
 	u := c.BaseURL.ResolveReference(rel)
+
+  log.Printf("request")
 	response, err := c.NewRequest().
 		SetResult(&ServiceAccountsResponse{}).
 		SetError(&ErrorResponse{}).
 		Get(u.String())
+
+  log.Printf("after request")
+
+  log.Printf("request again")
+
+  r := c.NewRequest().
+		SetResult(&ServiceAccountsResponse{}).
+		SetError(&ErrorResponse{})
+
+  log.Printf("before GET")
+
+  response, err = r.Get(u.String())
+  //log.Printf("put instead")
+	//response, err = r.Put(u.String())
+
+  log.Printf("after request again")
 
 	if err != nil {
 		return []ServiceAccount{}, err
@@ -105,4 +139,40 @@ func (c *Client) DeleteServiceAccount(id int) error {
 	}
 
 	return nil
+}
+
+// OKAY I THINK THERE IS NO SUCH ROUTE
+//
+//
+// read service account
+//func (c *Client) GetServiceAccount(id, account_id string) (*ServiceAccount, error) {
+func (c *Client) GetServiceAccount(id string) (*ServiceAccount, error) {
+	rel, err := url.Parse(fmt.Sprintf("service_accounts/%s", id))
+  log.Printf("[ERROR] TESTTTTT: %s", err)
+	if err != nil {
+		return nil, err
+	}
+
+	u := c.BaseURL.ResolveReference(rel)
+
+	fmt.Println(rel.String())
+
+	response, err := c.NewRequest().
+		SetResult(&ServiceAccountResponse{}).
+		//SetQueryParam("account_id", account_id).
+		SetError(&ErrorResponse{}).
+		Get(u.String())
+
+  log.Printf("[ERROR] TESTTTTT: %s", err)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if response.IsError() {
+    log.Printf("[ERROR] its an error: %s", response.Error().(*ErrorResponse).Error.Message)
+		return nil, fmt.Errorf("get service account: %s", response.Error().(*ErrorResponse).Error.Message)
+	}
+
+	return &response.Result().(*ServiceAccountResponse).ServiceAccount, nil
 }

@@ -89,3 +89,30 @@ func (c *Client) ListAPIKeys(clusterID, accountID string) ([]APIKey, error) {
 	}
 	return response.Result().(*APIKeysResponse).APIKeys, nil
 }
+
+
+func (c *Client) GetAPIKey(id string) (*APIKey, error) {
+	rel, err := url.Parse(fmt.Sprintf("api_keys/%s", id))
+	if err != nil {
+		return nil, err
+	}
+
+	u := c.BaseURL.ResolveReference(rel)
+
+	fmt.Println(rel.String())
+
+	response, err := c.NewRequest().
+		SetResult(&APIKeyResponse{}).
+		SetError(&ErrorResponse{}).
+		Get(u.String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if response.IsError() {
+		return nil, fmt.Errorf("get API key: %s", response.Error().(*ErrorResponse).Error.Message)
+	}
+
+	return &response.Result().(*APIKeyResponse).APIKey, nil
+}

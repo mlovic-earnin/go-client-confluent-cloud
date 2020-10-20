@@ -2,6 +2,7 @@ package confluentcloud
 
 import (
 	"net/url"
+  "fmt"
 
 	resty "github.com/go-resty/resty/v2"
 )
@@ -31,6 +32,7 @@ type ErrorResponse struct {
 }
 
 func NewClient(email, password string) *Client {
+  fmt.Println("testtt")
 	baseURL, _ := url.Parse(defaultBaseURL)
 	client := resty.New()
 	client.SetDebug(true)
@@ -41,6 +43,7 @@ func NewClient(email, password string) *Client {
 
 func (c *Client) NewRequest() *resty.Request {
 	return c.client.R().
+    EnableTrace().
 		SetHeader("User-Agent", c.UserAgent).
 		SetError(&ErrorResponse{})
 }
